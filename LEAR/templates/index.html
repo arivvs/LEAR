@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream G435</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        /* Видео */
+        img {
+            width: 100%;
+            max-width: 1280px;
+            max-height: 80vh;
+            object-fit: contain;
+            background: #000;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            min-width: 200px;
+        }
+
+        .btn-audio { background: #2E8B57; color: white; }
+        .btn-audio:active { transform: scale(0.95); }
+        .btn-audio.playing {
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        .btn-reload { background: #FF69B4; color: white; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <img src="{{ url_for('video_feed') }}" alt="Ожидание стрима...">
+
+    <audio id="audioPlayer" style="display:none;" preload="none"></audio>
+
+    <div class="controls">
+        <button id="soundBtn" class="btn-audio" onclick="toggleAudio()">Включить звук</button>
+        <button class="btn-reload" onclick="location.reload()">Обновить</button>
+    </div>
+
+    <script>
+        var isPlaying = false;
+
+        function toggleAudio() {
+            var player = document.getElementById('audioPlayer');
+            var btn = document.getElementById('soundBtn');
+
+            if (!isPlaying) {
+
+                var streamUrl = "{{ url_for('audio_feed') }}" + "?t=" + new Date().getTime();
+
+                player.src = streamUrl;
+                player.type = "audio/wav";
+                player.load();
+
+                var playPromise = player.play();
+
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        console.log("Звук воспроизводится");
+                        // Меняем состояние
+                        isPlaying = true;
+                        // Меняем вид кнопки
+                        btn.innerText = "Выключить звук";
+                        btn.classList.add("playing"); // Делаем красной
+                    })
+                    .catch(error => {
+                        console.error("Ошибка:", error);
+                        alert("Ошибка запуска: " + error);
+                    });
+                }
+            } else {
+
+                player.pause();
+                player.src = "";
+                player.load();
+
+                isPlaying = false;
+                btn.innerText = "Включить звук";
+                btn.classList.remove("playing");
+            }
+        }
+    </script>
+</body>
+</html>
